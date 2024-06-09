@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::filesystem::{default_file, load_file, pick_file, Error};
+use iced::theme::TextEditor;
 use iced::{
     executor,
     widget::{button, column, container, horizontal_space, row, text, text_editor},
@@ -17,6 +18,7 @@ pub struct Editor {
 #[derive(Debug, Clone)]
 pub enum Message {
     Edit(text_editor::Action),
+    New,
     Open,
     FileOpened(Result<(PathBuf, Arc<String>), Error>),
 }
@@ -47,6 +49,14 @@ impl Application for Editor {
             Message::Edit(action) => {
                 self.content.perform(action);
 
+                self.error = None;
+
+                Command::none()
+            }
+            Message::New => {
+                self.path = None;
+                self.content = text_editor::Content::new();
+
                 Command::none()
             }
             Message::Open => Command::perform(pick_file(), Message::FileOpened),
@@ -65,24 +75,33 @@ impl Application for Editor {
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message> {
-        let controls = row![button("Open").on_press(Message::Open)];
-
-        let file_path = match self.path.as_deref().and_then(Path::to_str) {
-            Some(path) => text(path).size(14),
-            None => text(""),
-        };
+        let controls = row![
+            button("New").on_press(Message::New),
+            button("Open").on_press(Message::Open)
+        ];
 
         let input = text_editor(&self.content)
             .height(400)
             .on_action(Message::Edit);
 
-        let position = {
-            let (line, column) = self.content.cursor_position();
+        let status_bar = {
+            let status = if let Some(Error::IO(error)) = self.error {
+                text(error.to_string())
+            } else {
+                match self.path.as_deref().and_then(Path::to_str) {
+                    Some(path) => text(path).size(14),
+                    None => text("New file"),
+                }
+            };
 
-            text(format!("{}:{}", line + 1, column + 1))
+            let position = {
+                let (line, column) = self.content.cursor_position();
+
+                text(format!("{}:{}", line + 1, column + 1))
+            };
+
+            row![status, horizontal_space(), position]
         };
-
-        let status_bar = row![file_path, horizontal_space(), position];
 
         container(column![controls, input, status_bar].spacing(10))
             .padding(10)
