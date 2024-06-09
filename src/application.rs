@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::filesystem::{default_file, load_file, pick_file, save_file, Error};
 use iced::{
     executor,
+    highlighter::{self, Highlighter},
     widget::{button, column, container, horizontal_space, row, text, text_editor},
     Application, Command, Theme,
 };
@@ -97,7 +98,19 @@ impl Application for Editor {
 
         let input = text_editor(&self.content)
             .height(400)
-            .on_action(Message::Edit);
+            .on_action(Message::Edit)
+            .highlight::<Highlighter>(
+                highlighter::Settings {
+                    theme: highlighter::Theme::SolarizedDark,
+                    extension: self
+                        .path
+                        .as_ref()
+                        .and_then(|path| path.extension()?.to_str())
+                        .unwrap_or("rs")
+                        .to_string(),
+                },
+                |highlight, _theme| highlight.to_format(),
+            );
 
         let status_bar = {
             let status = if let Some(Error::IO(error)) = self.error {
