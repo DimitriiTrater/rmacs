@@ -1148,6 +1148,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced_aw"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e68c330918a95bd73176206d65b84efe9aee6581da0e6dea0390cd146d7214c"
+dependencies = [
+ "cfg-if",
+ "iced",
+]
+
+[[package]]
 name = "iced_core"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2751,6 +2761,7 @@ name = "todo_rs"
 version = "0.1.0"
 dependencies = [
  "iced",
+ "iced_aw",
  "rfd",
  "tokio",
 ]

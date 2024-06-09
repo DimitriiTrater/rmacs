@@ -1,4 +1,5 @@
 pub mod application;
+pub mod buttons;
 pub mod filesystem;
 
 use crate::application::Editor;

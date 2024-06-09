@@ -1,13 +1,19 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use crate::buttons::labeled_button;
 use crate::filesystem::{default_file, load_file, pick_file, save_file, Error};
+
 use iced::{
     executor,
     highlighter::{self, Highlighter},
-    widget::{button, column, container, horizontal_space, row, text, text_editor},
-    Application, Command, Theme,
+    widget::{column, container, horizontal_space, row, text, text_editor},
+    Application, Command, Length, Theme,
 };
+
+use iced_aw::menu::{Item, Menu};
+
+use iced_aw::{menu_bar, menu_items};
 
 pub struct Editor {
     path: Option<PathBuf>,
@@ -17,6 +23,8 @@ pub struct Editor {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    FileMenuBar(String),
+
     Edit(text_editor::Action),
     New,
     Open,
@@ -48,6 +56,7 @@ impl Application for Editor {
 
     fn update(&mut self, message: Self::Message) -> Command<Message> {
         match message {
+            Message::FileMenuBar(_) => Command::none(),
             Message::Edit(action) => {
                 self.content.perform(action);
 
@@ -90,11 +99,22 @@ impl Application for Editor {
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message> {
-        let controls = row![
-            button("New").on_press(Message::New),
-            button("Open").on_press(Message::Open),
-            button("Save").on_press(Message::Save)
-        ];
+        let menu_tpl = |items| Menu::new(items).max_width(180.0).offset(15.0).spacing(5.0);
+
+        let mb = menu_bar!((
+            labeled_button("File", Message::FileMenuBar("File".into())).width(Length::Shrink),
+            {
+                let sub = menu_tpl(menu_items!((labeled_button("New", Message::New)
+                    .width(Length::Fill))(
+                    labeled_button("Open", Message::Open).width(Length::Fill)
+                )(
+                    labeled_button("Save", Message::Save).width(Length::Fill)
+                )));
+                sub
+            }
+        ));
+
+        let controls = row![mb];
 
         let input = text_editor(&self.content)
             .height(400)
