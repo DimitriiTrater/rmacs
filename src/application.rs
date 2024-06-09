@@ -1,8 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::filesystem::{default_file, load_file, pick_file, Error};
-use iced::theme::TextEditor;
+use crate::filesystem::{default_file, load_file, pick_file, save_file, Error};
 use iced::{
     executor,
     widget::{button, column, container, horizontal_space, row, text, text_editor},
@@ -21,6 +20,8 @@ pub enum Message {
     New,
     Open,
     FileOpened(Result<(PathBuf, Arc<String>), Error>),
+    Save,
+    FileSaved(Result<PathBuf, Error>),
 }
 
 impl Application for Editor {
@@ -71,13 +72,27 @@ impl Application for Editor {
 
                 Command::none()
             }
+            Message::Save => {
+                let text = self.content.text();
+
+                Command::perform(save_file(self.path.clone(), text), Message::FileSaved)
+            }
+            Message::FileSaved(Ok(path)) => {
+                self.path = Some(path);
+                Command::none()
+            }
+            Message::FileSaved(Err(error)) => {
+                self.error = Some(error);
+                Command::none()
+            }
         }
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message> {
         let controls = row![
             button("New").on_press(Message::New),
-            button("Open").on_press(Message::Open)
+            button("Open").on_press(Message::Open),
+            button("Save").on_press(Message::Save)
         ];
 
         let input = text_editor(&self.content)

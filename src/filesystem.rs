@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::io::{self};
 use std::sync::Arc;
 use rfd;
@@ -24,6 +24,23 @@ pub async fn pick_file() -> Result<(PathBuf, Arc<String>), Error> {
 
 pub fn default_file() -> PathBuf {
     PathBuf::from(format!("{}/src/main.rs", env!("CARGO_MANIFEST_DIR")))
+}
+
+pub async fn save_file(path: Option<PathBuf>, text: String) -> Result<PathBuf, Error>{
+    let path = if let Some(path) = path {
+        path
+    } else {
+        rfd::AsyncFileDialog::new()
+            .set_title("Choose a file name")
+            .save_file()
+            .await
+            .ok_or(Error::DialogClosed)
+            .map(| handle | handle.path().to_owned())?
+    };
+    tokio::fs::write(&path, text)
+        .await
+        .map_err(| error | Error::IO(error.kind()))?;
+    Ok(path)
 }
 
 #[derive(Debug, Clone)]
