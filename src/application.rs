@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use crate::buttons::labeled_button;
 use crate::filesystem::{default_file, load_file, pick_file, save_file, Error};
+use crate::icons::{new_icon, open_icon, save_icon};
 
+use iced::widget::button;
 use iced::{
     executor,
     highlighter::{self, Highlighter},
@@ -104,17 +106,21 @@ impl Application for Editor {
         let mb = menu_bar!((
             labeled_button("File", Message::FileMenuBar("File".into())).width(Length::Shrink),
             {
-                let sub = menu_tpl(menu_items!((labeled_button("New", Message::New)
-                    .width(Length::Fill))(
-                    labeled_button("Open", Message::Open).width(Length::Fill)
+                let sub = menu_tpl(menu_items!((button(new_icon()).on_press(Message::New))(
+                    button(open_icon()).on_press(Message::Open)
                 )(
-                    labeled_button("Save", Message::Save).width(Length::Fill)
+                    button(save_icon()).on_press(Message::Save)
                 )));
                 sub
             }
         ));
 
-        let controls = row![mb];
+        // let controls = row![mb];
+        let controls = row![
+            button(new_icon()).on_press(Message::New),
+            button(open_icon()).on_press(Message::Open),
+            button(save_icon()).on_press(Message::Save)
+        ];
 
         let input = text_editor(&self.content)
             .height(400)
